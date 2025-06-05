@@ -8,10 +8,11 @@ import {
 export type NewChatterType = z.infer<typeof NewChatterSchema>;
 export interface ChatterType extends Omit<NewChatterType, "password"> {
 	status: "online" | "offline" | "idle" | "dnd";
+	friends?: Array<string>;
 	id: string;
 }
 
-export type ChatterSearchResult = Omit<ChatterType, "email">;
+export type ChatterSearchResult = Omit<ChatterType, "friends" | "email">;
 export type ChatterSearchResponse = {
 	chatters: ChatterSearchResult[];
 };

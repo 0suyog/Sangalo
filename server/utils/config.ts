@@ -2,7 +2,12 @@ import "dotenv/config";
 import { logger } from "./helpers";
 export const PORT = process.env.PORT || 3000;
 export const NODE_ENV = process.env.NODE_ENV;
-let uri = process.env.MONGO_TEST_DB;
+let uri: string | undefined;
+if (NODE_ENV === "test") {
+	uri = process.env.MONGO_TEST_DB;
+} else {
+	uri = process.env.MONGO_DEV_DB;
+}
 let secretKey = process.env.SECRETKEY;
 if (!uri) {
 	logger.log(

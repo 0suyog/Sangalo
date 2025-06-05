@@ -11,7 +11,6 @@ import { userExtractor } from "../utils/middleWares";
 const ChatterRouter = Router();
 
 // No Auth Routes
-
 // register route
 ChatterRouter.post(
 	"/register",
@@ -63,21 +62,7 @@ ChatterRouter.post("/login", async (_req, res: Response<TokenType>, next) => {
 	}
 });
 
-// route to get friends list
-
-ChatterRouter.get(
-	"/:id/friends",
-	async (_req, res: Response<string[]>, next) => {
-		try {
-			const id = _req.params.id;
-			const friends = await chatterServices.getFriends(id);
-			res.json(friends);
-			return;
-		} catch (e) {
-			next(e);
-		}
-	}
-);
+// check if a username is taken
 
 ChatterRouter.get("/exists/:username", (_req, res, next) => {
 	try {
@@ -115,6 +100,21 @@ ChatterRouter.get(
 			const searchFilter = SearchSchema.parse(_req.body);
 			const results = await chatterServices.searchChatter(searchFilter);
 			res.json({ chatters: results });
+			return;
+		} catch (e) {
+			next(e);
+		}
+	}
+);
+
+ChatterRouter.get(
+	"/friends",
+	userExtractor,
+	async (_req: Request, res: Response<string[]>, next: NextFunction) => {
+		try {
+			const id = _req.chatter?.id as string;
+			const friends = await chatterServices.getFriends(id);
+			res.json(friends);
 			return;
 		} catch (e) {
 			next(e);

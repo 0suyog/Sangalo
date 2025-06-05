@@ -1,0 +1,4 @@
+interface NewMessageType {
+	message: string;
+  
+}

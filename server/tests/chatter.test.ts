@@ -230,29 +230,40 @@ describe("Chatter Test", () => {
 					.expect(401);
 			});
 			describe("Auth is added", async () => {
-				it("should return status 200 and should add both's id to friendList", async () => {
+				it.only("should return status 200 and should add both's id to friendList", async () => {
 					// adding returnList[1] user as friend
 					await api
 						.post(`/api/chatter/addFriend/${returnList[1].id}`)
 						.set({ authorization: token })
 						.expect(200);
-					// testing to see if each of them have each others id in firend list
-					const chatter: ChatterType = (
-						await api.get(`/api/chatter/username/${chatters[0].username}`)
-					).body;
-					const friend: ChatterType = (
-						await api.get(`/api/chatter/username/${returnList[1].username}`)
-					).body;
+					// logging in as friend aswell to get the token to get friendlist
+					// we can use either returnList or chatter it doesnt matter cuz Pormise.all preserves order
+					let res = await api.post("/api/chatter/login").send({
+						username: chatters[1].username,
+						password: chatters[1].password,
+					});
+					let friendToken = res.body.token;
 					let includesInBoth = false;
+					// getting friendlist of both chatter and Friend
+					let friendListOfChatter: string[] = (
+						await api.get("/api/chatter/friends").set({ authorization: token })
+					).body;
+					let friendListOfFriend: string[] = (
+						await api
+							.get("/api/chatter/friends")
+							.set({ authorization: `Bearer ${friendToken}` })
+					).body;
 					if (
-						chatter.friends?.includes(friend.id) &&
-						friend.friends?.includes(chatter.id)
+						friendListOfChatter.includes(returnList[1].id) &&
+						friendListOfFriend.includes(returnList[0].id)
 					) {
 						includesInBoth = true;
 					}
+
 					assert.strictEqual(includesInBoth, true);
 				});
 			});
+			it("should return all friends", async () => {});
 		});
 		it("should return all matching display name users when searching", async () => {
 			const res = await api
@@ -263,7 +274,7 @@ describe("Chatter Test", () => {
 				.set({ authorization: token });
 			assert.strictEqual(res.body.chatters.length, 3);
 		});
-		describe.only("deleting a chatter", () => {
+		describe("deleting a chatter", () => {
 			it("should delete the loggedIn user and return status 204", async () => {
 				await api
 					.delete("/api/chatter/delete")

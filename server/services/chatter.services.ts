@@ -57,7 +57,7 @@ const getById = async (id: string): Promise<ChatterType> => {
 };
 
 const getFriends = async (id: string): Promise<string[]> => {
-	let chatter = await Chatter.findById(id, "-_id friends").lean();
+	let chatter = await Chatter.findById(id, { _id: 0, friends: 1 }).lean();
 	if (chatter) {
 		return chatter.friends.map((id) => id.toString());
 	}
@@ -148,7 +148,6 @@ const searchChatter = async (
 };
 
 const deleteChatter = async (id: string) => {
-
 	await Chatter.deleteOne({ _id: id });
 };
 

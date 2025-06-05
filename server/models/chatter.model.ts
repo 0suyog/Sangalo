@@ -40,17 +40,9 @@ const ChatterSchema = new Schema<ChatterDoc>(
 			virtuals: true,
 			transform: function (_doc, ret): ChatterType {
 				let { _id, __v, password, ...chatterData } = ret;
-				let friends: string[] = [];
-				if (chatterData.friends) {
-					friends = chatterData.friends.map((id: Types.ObjectId) =>
-						id.toString()
-					);
-				}
 				let returnValue = {
 					id: _id.toString(),
 					...chatterData,
-
-					friends,
 				} as ChatterType;
 				return returnValue;
 			},
