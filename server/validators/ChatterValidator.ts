@@ -18,3 +18,7 @@ export const NewChatterSchema = LoginSchema.extend({
 		.max(16, "Display name should not exceed 16 letters"),
 	email: z.string().optional(),
 });
+
+export const SearchSchema = z.object({
+	displayName: z.string(),
+});

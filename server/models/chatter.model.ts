@@ -38,13 +38,20 @@ const ChatterSchema = new Schema<ChatterDoc>(
 	{
 		toJSON: {
 			virtuals: true,
-			transform: function (doc): ChatterType {
-				let { _id, __v, password, ...chatterData } = doc;
+			transform: function (_doc, ret): ChatterType {
+				let { _id, __v, password, ...chatterData } = ret;
+				let friends: string[] = [];
+				if (chatterData.friends) {
+					friends = chatterData.friends.map((id: Types.ObjectId) =>
+						id.toString()
+					);
+				}
 				let returnValue = {
 					id: _id.toString(),
 					...chatterData,
-					friends: chatterData.friends.map((id) => id.toString()),
-				};
+
+					friends,
+				} as ChatterType;
 				return returnValue;
 			},
 		},

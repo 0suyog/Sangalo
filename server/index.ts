@@ -1,11 +1,9 @@
 import { PORT } from "./utils/config";
-import { connectDb } from "./dbhandler";
 import app from "./app";
-
-connectDb();
+import { logger } from "./utils/helpers";
 
 const server = app.listen(PORT, () => {
-	console.log(`Server running at ${PORT}`);
+	logger.log(`Server running at ${PORT}`);
 });
 
 export default server;

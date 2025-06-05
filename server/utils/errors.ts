@@ -1,4 +1,4 @@
-class ServerError extends Error {
+export class ServerError extends Error {
 	public statusCode: number;
 	public options: object;
 	constructor(

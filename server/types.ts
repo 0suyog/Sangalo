@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { LoginSchema, NewChatterSchema } from "./validators/ChatterValidator";
+import {
+	LoginSchema,
+	NewChatterSchema,
+	SearchSchema,
+} from "./validators/ChatterValidator";
 
 export type NewChatterType = z.infer<typeof NewChatterSchema>;
 export interface ChatterType extends Omit<NewChatterType, "password"> {
@@ -8,9 +12,20 @@ export interface ChatterType extends Omit<NewChatterType, "password"> {
 	id: string;
 }
 
+export type ChatterSearchResult = Omit<ChatterType, "friends" | "email">;
+export type ChatterSearchResponse = {
+	chatters: ChatterSearchResult[];
+};
+
 export type LoginType = z.infer<typeof LoginSchema>;
 
-// Type  jwt
 export interface TokenType {
 	token: string;
 }
+
+export interface JwtPayload {
+	username: string;
+	id: string;
+}
+
+export type SearchType = z.infer<typeof SearchSchema>;
