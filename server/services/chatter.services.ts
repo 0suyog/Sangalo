@@ -7,11 +7,12 @@ import {
 	NewChatterType,
 	SearchType,
 	TokenType,
-} from "../types";
+} from "../chatterTypes";
 import { sign } from "jsonwebtoken";
 import { NODE_ENV, SECRETKEY } from "../utils/config";
 import { ServerError } from "../utils/errors";
 import { hash } from "bcryptjs";
+import { isMongoID } from "../typeGuards";
 
 const addChatter = async (chatter: NewChatterType): Promise<ChatterType> => {
 	let hashedPassword = await hash(chatter.password, 7);
@@ -42,6 +43,9 @@ const getByUsername = async (username: string): Promise<ChatterType> => {
 };
 
 const getById = async (id: string): Promise<ChatterType> => {
+	if (!isMongoID(id)) {
+		throw new ServerError("Invalid Id", 422, "INVALID_ID", { id })
+	}
 	let chatter = await Chatter.findById(id);
 	if (chatter) {
 		return chatter.toJSON<ChatterType>();
@@ -57,6 +61,9 @@ const getById = async (id: string): Promise<ChatterType> => {
 };
 
 const getFriends = async (id: string): Promise<string[]> => {
+	if (!isMongoID(id)) {
+		throw new ServerError("Invalid Id", 422, "INVALID_ID", { id })
+	}
 	let chatter = await Chatter.findById(id, { _id: 0, friends: 1 }).lean();
 	if (chatter) {
 		return chatter.friends.map((id) => id.toString());
@@ -103,6 +110,12 @@ const loginChatter = async (chatterData: LoginType): Promise<TokenType> => {
 };
 
 const addFriend = async (chatterId: string, friendId: string) => {
+	if (!isMongoID(chatterId)) {
+		throw new ServerError("Invalid Id", 422, "INVALID_ID", { chatterId })
+	}
+	if (!isMongoID(friendId)) {
+		throw new ServerError("Invalid Id", 422, "INVALID_ID", { friendId })
+	}
 	const friend = await Chatter.findById(friendId);
 	if (!friend) {
 		throw new ServerError(
@@ -148,6 +161,9 @@ const searchChatter = async (
 };
 
 const deleteChatter = async (id: string) => {
+	if (!isMongoID(id)) {
+		throw new ServerError("Invalid Id", 422, "INVALID_ID", { id })
+	}
 	await Chatter.deleteOne({ _id: id });
 };
 

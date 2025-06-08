@@ -3,9 +3,9 @@ import {
 	LoginSchema,
 	NewChatterSchema,
 	SearchSchema,
-} from "../validators/ChatterValidator";
+} from "../validators/chatterValidator";
 import { chatterServices } from "../services/chatter.services";
-import { ChatterSearchResponse, ChatterType, TokenType } from "../types";
+import { ChatterSearchResponse, ChatterType, TokenType } from "../chatterTypes";
 import { userExtractor } from "../utils/middleWares";
 
 const ChatterRouter = Router();
@@ -63,7 +63,6 @@ ChatterRouter.post("/login", async (_req, res: Response<TokenType>, next) => {
 });
 
 // check if a username is taken
-
 ChatterRouter.get("/exists/:username", async (_req, res, next) => {
 	try {
 		const username: string = _req.params.username;

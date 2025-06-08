@@ -1,5 +1,5 @@
 import { after, beforeEach, describe, it } from "node:test";
-import { ChatterType, NewChatterType } from "../types";
+import { ChatterType, NewChatterType } from "../chatterTypes";
 import supertest from "supertest";
 import app from "../app";
 import assert from "node:assert";
@@ -263,7 +263,7 @@ describe("Chatter Test", () => {
 					assert.strictEqual(includesInBoth, true);
 				});
 			});
-			it("should return all friends", async () => {});
+			it("should return all friends", async () => { });
 		});
 		it("should return all matching display name users when searching", async () => {
 			const res = await api

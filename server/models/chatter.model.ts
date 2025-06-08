@@ -1,7 +1,7 @@
-import { model, Schema, Types } from "mongoose";
-import { ChatterType, NewChatterType } from "../types";
+import { model, Schema } from "mongoose";
+import { ChatterType } from "../chatterTypes";
 
-const ChatterSchema = new Schema<ChatterDoc>(
+const ChatterSchema = new Schema(
 	{
 		username: {
 			type: String,
@@ -18,6 +18,7 @@ const ChatterSchema = new Schema<ChatterDoc>(
 		displayName: {
 			type: String,
 			required: true,
+			trim: true,
 		},
 		email: {
 			type: String,
@@ -51,10 +52,5 @@ const ChatterSchema = new Schema<ChatterDoc>(
 );
 
 // This is just the document type of the Schema its different than Chatter Type cuz mongoose stores id as objectId
-interface ChatterDoc extends NewChatterType {
-	status: "online" | "offline" | "idle" | "dnd";
-	friends: Types.ObjectId[];
-	toJSON(): ChatterType;
-}
 
 export const Chatter = model("Chatter", ChatterSchema);

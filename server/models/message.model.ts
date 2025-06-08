@@ -1,63 +1,70 @@
-import mongoose from "mongoose";
+import { Types, Schema, model } from "mongoose";
+import { MessageValidatorSchema } from "../validators/messageValidator";
+import { MessageType } from "../messageTypes";
 
-const MessageSchema = new mongoose.Schema(
-	{
-		sender: {
-			ref: "Chatter",
-			type: mongoose.Types.ObjectId,
-			required: true,
-		},
-		receiver: {
-			ref: "Chatter",
-			type: mongoose.Types.ObjectId,
-			required: true,
-		},
-		sentTime: {
-			type: Date,
-			required: true,
-		},
-		receivedTime: {
-			type: Date,
-			required: true,
-		},
-		read: {
-			type: Boolean,
-			default: false,
-			required: true,
-		},
-		delivered: {
-			type: Boolean,
-			default: false,
-			required: true,
-		},
-		draft: {
-			type: String,
-		},
-		reactions: {
-			type: [
-				{
-					Chatter: {
-						type: mongoose.Types.ObjectId,
-						ref: "Chatter",
-					},
-					reaction: {
-						type: String,
-						enum: ["like", "love", "sad", "laugh", "cry"],
-					},
-				},
-			],
-		},
-		edited: {
-			type: Boolean,
-			default: false,
-			required: true,
-		},
+const MessageSchema = new Schema({
+	chatId: {
+		type: Types.ObjectId,
+		ref: "Chat",
 	},
-	{
-		timestamps: true,
+	sender: {
+		ref: "Chatter",
+		type: Types.ObjectId,
+		required: true,
+	},
+	receiver: {
+		ref: "Chatter",
+		type: Types.ObjectId,
+		required: true,
+	},
+	message: {
+		type: String,
+		require: true,
+		trim: true,
+	},
+	sentTime: {
+		type: Date,
+		required: true,
+	},
+	receivedTime: {
+		type: Date,
+		required: true,
+	},
+	status: {
+		type: String,
+		enum: ["read", "delivered", "sent"],
+		default: 'sent'
+	},
+	reactions: {
+		type: [
+			{
+				chatter: {
+					type: Types.ObjectId,
+					ref: "Chatter",
+				},
+				reaction: {
+					type: String,
+					enum: ["like", "love", "sad", "laugh", "cry"],
+				},
+			},
+		],
+	},
+}, {
+	toJSON: {
+		transform: (_doc, ret): MessageType => {
+			ret.id = _doc._id.toString();
+			// changing all ObjectId to string so i can parse it properly
+			Object.keys(ret).map((key) => {
+				if (ret[key] instanceof Types.ObjectId) {
+					ret[key] = ret[key].toString();
+				}
+			})
+			return MessageValidatorSchema.parse(ret);
+		}
 	}
+}
 );
 
-const Message = mongoose.model("Message", MessageSchema);
+const Message = model("Message", MessageSchema);
 
 export default Message;

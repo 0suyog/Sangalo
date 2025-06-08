@@ -3,7 +3,7 @@ import { ZodError } from "zod";
 import { chatterServices } from "../services/chatter.services";
 import { verify } from "jsonwebtoken";
 import { SECRETKEY } from "./config";
-import { JwtPayload } from "../types";
+import { JwtPayload } from "../chatterTypes";
 import { ServerError } from "./errors";
 import { MongoServerError } from "mongodb";
 import { logger } from "./helpers";
@@ -48,6 +48,7 @@ export const errorHandler = (
 					},
 				},
 			});
+			return
 		}
 		// ! Remove this after DDebugging
 		logger.log("######################");
@@ -56,6 +57,11 @@ export const errorHandler = (
 		logger.log("|");
 		logger.log("######################");
 		// ! Remove this after DDebugging
+		res.status(500).json({
+			error: {
+				description: "Something bad happened in db. Tell the developer what you were doing when this happened"
+			}
+		})
 	}
 
 	if (error instanceof ZodError) {

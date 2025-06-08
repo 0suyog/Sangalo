@@ -1,4 +1,4 @@
-import { ChatterType } from "../types";
+import { ChatterType } from "../chatterTypes";
 
 declare global {
 	namespace Express {

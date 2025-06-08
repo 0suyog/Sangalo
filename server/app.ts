@@ -15,6 +15,7 @@ app.use(express.json());
 app.use(cors());
 app.use(methodLogger);
 
+import "./services/message.services"
 // routes
 app.use("/api/chatter", ChatterRouter);
 
