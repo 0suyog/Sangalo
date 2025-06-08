@@ -64,10 +64,10 @@ ChatterRouter.post("/login", async (_req, res: Response<TokenType>, next) => {
 
 // check if a username is taken
 
-ChatterRouter.get("/exists/:username", (_req, res, next) => {
+ChatterRouter.get("/exists/:username", async (_req, res, next) => {
 	try {
 		const username: string = _req.params.username;
-		const exists = chatterServices.checkUserAvailability(username);
+		const exists = await chatterServices.checkUserAvailability(username);
 		res.json({ exists: exists });
 		return;
 	} catch (e) {
