@@ -67,7 +67,7 @@ all the following endpoints are prefixed by `http://localhost:<yourPort>`
 | POST        | /api/chatter/login              | LoginType      | TokenType           |
 | GET         | /api/chatter/id/:id             | -              | ChatterType         |
 | GET         | /api/chatter/username/:username | -              | ChatterType         |
-| GET         | /api/chatter/exists/:id         | -              | {exists:True/False} |
+| GET         | /api/chatter/exists/:username   | -              | {exists:true/false} |
 
 ## Authorized EndPoints
 
