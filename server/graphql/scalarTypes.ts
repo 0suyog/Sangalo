@@ -18,7 +18,7 @@ export const GraphQlDate = new GraphQLScalarType({
 	},
 	parseValue: (inputValue: unknown) => {
 		if (typeof inputValue === "string" && Date.parse(inputValue)) {
-			return Date.parse(inputValue);
+			return new Date(inputValue).toISOString();
 		}
 		throw new GraphQLError("Expected a Date field", {
 			extensions: {
@@ -29,7 +29,7 @@ export const GraphQlDate = new GraphQLScalarType({
 	},
 	parseLiteral: (ast) => {
 		if (ast.kind === Kind.STRING) {
-			return Date.parse(ast.value);
+			return new Date(ast.value).toISOString()
 		}
 		throw new GraphQLError("Date should be a string", {
 			extensions: { error: "INVALID_DATA_FORMAT", input: ast },

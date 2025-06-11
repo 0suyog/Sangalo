@@ -1,17 +1,23 @@
-import { after, beforeEach, describe, it } from "node:test";
+import { ApolloServer } from '@apollo/server';
+import { after, before, beforeEach, describe, it } from "node:test";
 import { ChatterType, NewChatterType } from "../chatterTypes";
 import supertest from "supertest";
-import app from "../app";
 import assert from "node:assert";
 import mongoose from "mongoose";
-const api = supertest(app);
+import createApp from "../app";
+import TestAgent from "supertest/lib/agent";
+import Test from "supertest/lib/test";
 
 describe("Chatter Test", () => {
-	after(async () => {
-		mongoose.disconnect();
-		console.log("Test Db disconnected");
-	});
-	describe("Unauthorized routes", async () => {
+	let api: TestAgent<Test>;
+	let gqServer: ApolloServer<ChatterType>
+	before(async () => {
+		let { app, apolloServer } = await createApp();
+		gqServer = apolloServer
+		api = supertest(app)
+
+	})
+	describe("Unauthorized routes", () => {
 		const chatterDetails: NewChatterType[] = [
 			{
 				username: "test1",
@@ -54,20 +60,14 @@ describe("Chatter Test", () => {
 			await api.post("/api/test/resetChatter");
 		});
 		describe("Registering a new Chatter", () => {
-			it("should send the userDetails to client removing the password and status is offline initially ", async () => {
-				const res = await api
+			it("Status 201 is sent on register", async () => {
+				await api
 					.post("/api/chatter/register")
 					.send(chatterDetails[0])
-					.expect(200);
+					.expect(201);
 
-				const { id, ...receivedRest } = res.body;
-				const { password, ...actualRest } = chatterDetails[0];
-				assert.deepStrictEqual(
-					{ ...actualRest, status: "offline", friends: [] },
-					receivedRest
-				);
 			});
-			describe("Missing or invalid Arguments send status 422", async () => {
+			describe("Missing or invalid Arguments send status 422", () => {
 				let chatter: Partial<NewChatterType> = {};
 				it("Missing all", async () => {
 					await api.post("/api/chatter/register").send(chatter).expect(422);
@@ -101,7 +101,7 @@ describe("Chatter Test", () => {
 			});
 		});
 
-		describe("Logging In", async () => {
+		describe("Logging In", () => {
 			beforeEach(async () => {
 				await api.post("/api/chatter/register").send(chatterDetails[1]);
 			});
@@ -149,7 +149,7 @@ describe("Chatter Test", () => {
 					.expect(422);
 			});
 		});
-		describe("getting by username", async () => {
+		describe("getting by username", () => {
 			beforeEach(async () => {
 				await api.post("/api/chatter/register").send(chatterDetails[0]);
 			});
@@ -165,7 +165,7 @@ describe("Chatter Test", () => {
 				await api.get("/api/chatter/username/doesntExist").expect(404);
 			});
 		});
-		describe("getting by id", async () => {
+		describe("getting by id", () => {
 			let chatter: ChatterType;
 			beforeEach(async () => {
 				const res = await api
@@ -185,7 +185,7 @@ describe("Chatter Test", () => {
 		});
 	});
 
-	describe("Authorized Routes", async () => {
+	describe("Authorized Routes", () => {
 		let chatters: NewChatterType[] = [
 			{
 				username: "similar1",
@@ -204,18 +204,19 @@ describe("Chatter Test", () => {
 			},
 			{
 				username: "different1",
-				password: "atleast",
+				password: "atleast8",
 				displayName: "Different1",
 			},
 		];
 		let token = "";
 		let returnList: ChatterType[] = [];
 		beforeEach(async () => {
-			await api.post("/api/test/resetChatter");
+			await api.post("/api/test/resetDb");
 			const chatterList = chatters.map((chatter) =>
 				api.post("/api/chatter/register").send(chatter)
 			);
-			const list = await Promise.all(chatterList);
+			await Promise.all(chatterList);
+			const list = await Promise.all(chatters.map(chatter => api.get(`/api/chatter/username/${chatter.username}`)))
 			returnList = list.map((res) => {
 				return res.body;
 			});
@@ -223,14 +224,14 @@ describe("Chatter Test", () => {
 			const res = await api.post("/api/chatter/login").send(chatters[0]);
 			token = `Bearer ${res.body.token}`;
 		});
-		describe("Adding friend", async () => {
+		describe("Adding friend", () => {
 			it("should return status 401 without any auth", async () => {
 				await api
 					.post(`/api/chatter/addFriend/${returnList[0].id}`)
 					.expect(401);
 			});
-			describe("Auth is added", async () => {
-				it.only("should return status 200 and should add both's id to friendList", async () => {
+			describe("Auth is added", () => {
+				it("should return status 200 and should add both's id to friendList", async () => {
 					// adding returnList[1] user as friend
 					await api
 						.post(`/api/chatter/addFriend/${returnList[1].id}`)
@@ -245,17 +246,17 @@ describe("Chatter Test", () => {
 					let friendToken = res.body.token;
 					let includesInBoth = false;
 					// getting friendlist of both chatter and Friend
-					let friendListOfChatter: string[] = (
+					let friendListOfChatter: ChatterType[] = (
 						await api.get("/api/chatter/friends").set({ authorization: token })
 					).body;
-					let friendListOfFriend: string[] = (
+					let friendListOfFriend: ChatterType[] = (
 						await api
 							.get("/api/chatter/friends")
 							.set({ authorization: `Bearer ${friendToken}` })
 					).body;
 					if (
-						friendListOfChatter.includes(returnList[1].id) &&
-						friendListOfFriend.includes(returnList[0].id)
+						friendListOfChatter.find((value) => value.id === returnList[1].id) &&
+						friendListOfFriend.find(value => value.id === returnList[0].id)
 					) {
 						includesInBoth = true;
 					}
@@ -288,4 +289,10 @@ describe("Chatter Test", () => {
 			});
 		});
 	});
+	after(async () => {
+		await gqServer.stop()
+		await mongoose.disconnect()
+		console.log("Test Db Disconnected");
+		console.log("Chatter Test Finished");
+	})
 });

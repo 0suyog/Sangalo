@@ -30,7 +30,7 @@ export const gqError = (message: string, code: string = "", invalidArgs: object 
 	if (Object.keys(invalidArgs).length) {
 		extensions.invalidArgs = invalidArgs
 	}
-	throw new GraphQLError(message, {
+	return new GraphQLError(message, {
 		extensions: {
 			...extensions
 		}

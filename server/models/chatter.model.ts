@@ -40,7 +40,7 @@ const ChatterSchema = new Schema(
 		toJSON: {
 			virtuals: true,
 			transform: function (_doc, ret): ChatterType {
-				let { _id, __v, password, ...chatterData } = ret;
+				let { _id, __v, password, friends, email, ...chatterData } = ret;
 				let returnValue = {
 					id: _id.toString(),
 					...chatterData,

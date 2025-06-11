@@ -1,19 +1,19 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 import {
 	LoginSchema,
 	NewChatterSchema,
 	SearchSchema,
-} from "./validators/chatterValidator";
+} from "./typeValidators/chatterValidator";
+import { MongoID } from "./types";
 
 export type NewChatterType = z.infer<typeof NewChatterSchema>;
-export interface ChatterType extends Omit<NewChatterType, "password"> {
+export interface ChatterType extends Omit<NewChatterType, "password" | "email"> {
 	status: "online" | "offline" | "idle" | "dnd";
-	id: string;
+	id: MongoID;
 }
 
-export type ChatterSearchResult = Omit<ChatterType, "email">;
 export type ChatterSearchResponse = {
-	chatters: ChatterSearchResult[];
+	chatters: ChatterType[];
 };
 
 export type LoginType = z.infer<typeof LoginSchema>;

@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import { ZodError } from "zod";
+import { ZodError } from "zod/v4";
 import { chatterServices } from "../services/chatter.services";
 import { verify } from "jsonwebtoken";
 import { SECRETKEY } from "./config";
-import { JwtPayload } from "../chatterTypes";
+import { ChatterType, JwtPayload } from "../chatterTypes";
 import { ServerError } from "./errors";
 import { MongoServerError } from "mongodb";
 import { logger } from "./helpers";
@@ -68,7 +68,7 @@ export const errorHandler = (
 		res.status(422).json({
 			error: {
 				name: error.name,
-				description: error.message,
+				description: "Input validation failed",
 				options: {
 					errors: error.issues,
 				},
@@ -88,34 +88,30 @@ export const errorHandler = (
 	}
 };
 
-export const userExtractor = async (
+export const chatterAuthentication = async (
 	_req: Request,
-	res: Response,
+	_res: Response,
 	next: NextFunction
 ) => {
-	const auth = _req.get("authorization");
-	if (auth === undefined) {
-		res.status(401).json({
-			error: {
-				description: "Invalid Request. No Auth found",
-			},
-		});
-		return;
-	}
-	if (!auth?.startsWith("Bearer ")) {
-		res.status(401).json({
-			error: {
-				description: "Invalid Auth",
-			},
-		});
-		return;
-	}
-	const token: string = auth.slice(7);
-	const chatterData = verify(token, SECRETKEY) as JwtPayload;
-	const chatter = await chatterServices.getById(chatterData.id);
+	const chatter = await extractChatter(_req);
 	_req.chatter = chatter;
 	next();
 };
+
+export const extractChatter = async (_req: Request): Promise<ChatterType> => {
+	const auth = _req.get("authorization");
+	if (auth === undefined) {
+		throw new ServerError("Invalid Request.No Auth found", 401, "NO_AUTH")
+	}
+	if (!auth?.startsWith("Bearer ")) {
+		throw new ServerError("Invalid Auth", 401, "NO_AUTH")
+	}
+	const token: string = auth.slice(7);
+	const decodedToken = verify(token, SECRETKEY) as JwtPayload;
+	const chatter = await chatterServices.getById(decodedToken.id)
+	return chatter;
+}
+
 
 export const unknownEndPoint = (_req: Request, res: Response) => {
 	res.status(404).send("What you looking for?");
@@ -128,8 +124,8 @@ export const methodLogger = (
 ) => {
 	logger.log("***-***");
 	logger.log(_req.url);
-	logger.log(_req.query);
-	logger.log(_req.body);
+	// logger.log(_req.query);
+	// logger.log(_req.body);
 	logger.log("***-***");
 	next();
 };

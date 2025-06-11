@@ -1,7 +1,6 @@
 import { compare } from "bcryptjs";
 import { Chatter } from "../models/chatter.model";
 import {
-	ChatterSearchResult,
 	ChatterType,
 	LoginType,
 	NewChatterType,
@@ -13,12 +12,13 @@ import { NODE_ENV, SECRETKEY } from "../utils/config";
 import { ServerError } from "../utils/errors";
 import { hash } from "bcryptjs";
 import { isMongoID } from "../typeGuards";
+import { MongoID } from "../types";
+import { Types } from "mongoose";
 
-const addChatter = async (chatter: NewChatterType): Promise<ChatterType> => {
+const addChatter = async (chatter: NewChatterType) => {
 	let hashedPassword = await hash(chatter.password, 7);
 	chatter.password = hashedPassword;
-	const newChatter = await new Chatter(chatter).save();
-	return newChatter.toJSON<ChatterType>();
+	await new Chatter(chatter).save();
 };
 
 const checkUserAvailability = async (username: string): Promise<boolean> => {
@@ -60,13 +60,18 @@ const getById = async (id: string): Promise<ChatterType> => {
 	);
 };
 
-const getFriends = async (id: string): Promise<string[]> => {
+const getFriends = async (id: string): Promise<ChatterType[]> => {
 	if (!isMongoID(id)) {
 		throw new ServerError("Invalid Id", 422, "INVALID_ID", { id })
 	}
-	let chatter = await Chatter.findById(id, { _id: 0, friends: 1 }).lean();
+	let chatter = await Chatter.findById(id, { _id: 0, friends: 1 }).populate("friends", "-friends, -email, -password").lean<{ friends: (Omit<ChatterType, "id"> & { _id: Types.ObjectId })[] }>();
 	if (chatter) {
-		return chatter.friends.map((id) => id.toString());
+		return chatter.friends.map(({ _id, ...friendData }) => {
+			return {
+				...friendData,
+				id: _id.toString() as MongoID
+			}
+		});
 	}
 	throw new ServerError(
 		"User with that id was not found",
@@ -144,7 +149,7 @@ const addFriend = async (chatterId: string, friendId: string) => {
 
 const searchChatter = async (
 	filter: SearchType
-): Promise<ChatterSearchResult[]> => {
+): Promise<ChatterType[]> => {
 	const results = await Chatter.find(
 		{ displayName: { $regex: `^${filter.displayName}` } },
 		"-friends -password -email"
@@ -152,7 +157,7 @@ const searchChatter = async (
 
 	return results.map((friend) => {
 		return {
-			id: friend._id.toString(),
+			id: friend._id.toString() as MongoID,
 			username: friend.username,
 			status: friend.status,
 			displayName: friend.displayName,
@@ -166,6 +171,11 @@ const deleteChatter = async (id: string) => {
 	}
 	await Chatter.deleteOne({ _id: id });
 };
+
+const areFriends = async (chatterId: MongoID, friendsId: MongoID[]): Promise<Boolean> => {
+	const exists = await Chatter.exists({ _id: chatterId, friends: { $all: friendsId } })
+	return Boolean(exists);
+}
 
 // For Testing purposes only
 const resetChatterDb = async () => {
@@ -186,4 +196,5 @@ export const chatterServices = {
 	checkUserAvailability,
 	resetChatterDb,
 	deleteChatter,
+	isFriend: areFriends
 };

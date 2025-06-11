@@ -1,6 +1,6 @@
-import { Types, Schema, model } from "mongoose";
-import { MessageValidatorSchema } from "../validators/messageValidator";
-import { MessageType } from "../messageTypes";
+import { Types, Schema, model, now } from "mongoose";
+import { MessageReturnSchema } from "../typeValidators/messageValidator";
+import { MessageReturnType } from "../messageTypes";
 
 const MessageSchema = new Schema({
 	chatId: {
@@ -15,7 +15,6 @@ const MessageSchema = new Schema({
 	receiver: {
 		ref: "Chatter",
 		type: Types.ObjectId,
-		required: true,
 	},
 	message: {
 		type: String,
@@ -25,10 +24,7 @@ const MessageSchema = new Schema({
 	sentTime: {
 		type: Date,
 		required: true,
-	},
-	receivedTime: {
-		type: Date,
-		required: true,
+		default: now()
 	},
 	status: {
 		type: String,
@@ -51,7 +47,7 @@ const MessageSchema = new Schema({
 	},
 }, {
 	toJSON: {
-		transform: (_doc, ret): MessageType => {
+		transform: (_doc, ret): MessageReturnType => {
 			ret.id = _doc._id.toString();
 			// changing all ObjectId to string so i can parse it properly
 			Object.keys(ret).map((key) => {
@@ -59,7 +55,7 @@ const MessageSchema = new Schema({
 					ret[key] = ret[key].toString();
 				}
 			})
-			return MessageValidatorSchema.parse(ret);
+			return MessageReturnSchema.parse(ret);
 		}
 	}
 }

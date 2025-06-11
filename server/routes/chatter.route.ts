@@ -3,10 +3,12 @@ import {
 	LoginSchema,
 	NewChatterSchema,
 	SearchSchema,
-} from "../validators/chatterValidator";
+} from "../typeValidators/chatterValidator";
 import { chatterServices } from "../services/chatter.services";
 import { ChatterSearchResponse, ChatterType, TokenType } from "../chatterTypes";
-import { userExtractor } from "../utils/middleWares";
+import { chatterAuthentication } from "../utils/middleWares";
+import { MongoID } from "../types";
+import { MongoIdSchema } from "../typeValidators/commonValidators";
 
 const ChatterRouter = Router();
 
@@ -14,11 +16,11 @@ const ChatterRouter = Router();
 // register route
 ChatterRouter.post(
 	"/register",
-	async (_req, res: Response<ChatterType>, next) => {
+	async (_req, res, next) => {
 		try {
 			let chatterDetails = NewChatterSchema.parse(_req.body);
-			const newChatter = await chatterServices.addChatter(chatterDetails);
-			res.json(newChatter);
+			await chatterServices.addChatter(chatterDetails);
+			res.status(201).send("created")
 			return;
 		} catch (e) {
 			next(e);
@@ -75,10 +77,10 @@ ChatterRouter.get("/exists/:username", async (_req, res, next) => {
 });
 
 // Authorized Routes
-ChatterRouter.post("/addFriend/:id", userExtractor, async (_req, res, next) => {
+ChatterRouter.post("/addFriend/:id", chatterAuthentication, async (_req, res, next) => {
 	try {
-		const friendId = _req.params.id;
-		const chatterId = _req.chatter?.id as string;
+		const friendId = MongoIdSchema.parse(_req.params.id);
+		const chatterId = _req.chatter?.id as MongoID;
 		await chatterServices.addFriend(chatterId, friendId);
 		res.sendStatus(200);
 		return;
@@ -89,7 +91,7 @@ ChatterRouter.post("/addFriend/:id", userExtractor, async (_req, res, next) => {
 
 ChatterRouter.get(
 	"/search",
-	userExtractor,
+	chatterAuthentication,
 	async (
 		_req: Request,
 		res: Response<ChatterSearchResponse>,
@@ -108,8 +110,8 @@ ChatterRouter.get(
 
 ChatterRouter.get(
 	"/friends",
-	userExtractor,
-	async (_req: Request, res: Response<string[]>, next: NextFunction) => {
+	chatterAuthentication,
+	async (_req: Request, res: Response<ChatterType[]>, next: NextFunction) => {
 		try {
 			const id = _req.chatter?.id as string;
 			const friends = await chatterServices.getFriends(id);
@@ -121,7 +123,7 @@ ChatterRouter.get(
 	}
 );
 
-ChatterRouter.delete("/delete", userExtractor, async (_req, res, next) => {
+ChatterRouter.delete("/delete", chatterAuthentication, async (_req, res, next) => {
 	try {
 		let userId: string = _req.chatter?.id as string;
 

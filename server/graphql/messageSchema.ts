@@ -1,10 +1,9 @@
-import { GraphQLError } from "graphql";
 import { GraphQlDate } from "../graphql/scalarTypes";
-import { MessageReactionType, NewMessageType } from "../messageTypes";
-import { isMongoID } from "../typeGuards";
-import { NewMessageSchema } from "../validators/messageValidator";
+import { FirstMessageSchema, NewMessageSchema } from "../typeValidators/messageValidator";
 import messageServices from "../services/message.services";
-import { gqError } from "../utils/errors";
+import { gqErrorHandler } from "../utils/graphQlErrorHandler";
+import { FirstMessageReturnType, MessageReturnType } from "../messageTypes";
+import { ChatterType } from "../chatterTypes";
 
 export const typeDefs = `
   scalar Date
@@ -21,34 +20,73 @@ export const typeDefs = `
     chatter:String!
     reaction:Reactions!
   }
+  
+  type Chat{
+    id:String!
+    participants:[String!]!
+    name:String
+  }
 
-  type NewMessage{
+  input NewMessage{
+    chatId:String!
+    message:String!
+  }
+  input FirstMessage{
+    message:String!
+    receiver:String!
+  }
+  
+  type FirstMessageReturn{
+    chat:Chat
+    message:String
+    sender:String
+    receiver:String
+    id:String
+    sentTime:Date
+  }
+
+  type Message{
     chatId:String!
     message:String!
     sender:String!
     receiver:String!
+    id:String!
     sentTime:Date!
+    reactions:[Reaction!]!
   }
 
+  type Query{
+    _empty:String!
+  }
 
   type Mutation{
-    sendMessage(message:NewMessage!):Message!
-    
+    firstMessage(message:FirstMessage!):FirstMessageReturn
+    message(message:NewMessage!):Message
   }
 `;
 
 export const resolvers = {
   Date: GraphQlDate,
 
+  Query: {},
   Mutation: {
-    sendMessage(message: unknown) {
+    async message(_: any, args: { message: unknown }, context: ChatterType): Promise<MessageReturnType> {
       try {
-
-        let newMessage = NewMessageSchema.parse(message);
-        let savedMessage = messageServices.addMessage(newMessage)
-        return savedMessage
+        const message = NewMessageSchema.parse(args.message)
+        let newMessage = await messageServices.addMessage(context.id, message)
+        return newMessage
       }
-      catch(e){
+      catch (e) {
+        throw gqErrorHandler(e)
+      }
+    },
+    async firstMessage(_: any, args: { message: unknown }, context: ChatterType): Promise<FirstMessageReturnType> {
+      try {
+        const message = FirstMessageSchema.parse(args.message);
+        let newMessage = await messageServices.firstMessage(context.id, message);
+        return newMessage;
+      } catch (e) {
+        throw gqErrorHandler(e)
       }
     }
   },
