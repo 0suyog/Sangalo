@@ -1,15 +1,15 @@
 import { after, before, beforeEach, describe, it } from "node:test";
 import supertest from "supertest";
-import { ChatterType, NewChatterType } from "../chatterTypes";
+import type { ChatterType, NewChatterType } from "../chatterTypes";
 import TestAgent from "supertest/lib/agent";
 import Test from "supertest/lib/test";
 import createApp from "../app";
 import mongoose from "mongoose";
-import { firstMessageMutation, messageMutation } from "./queries";
+import { chatStatusUpdateMutation, firstMessageMutation, messageMutation, reactMessageMutation } from "./queries";
 import { ok, strictEqual } from "assert";
 import { arraysAreEqual } from "./testHelpers";
 import { ApolloServer } from "@apollo/server";
-import { MessageReturnType } from "../messageTypes";
+import type { MessageReturnType } from "../messageTypes";
 let api: TestAgent<Test>;
 
 describe("Message Test", () => {
@@ -39,12 +39,10 @@ describe("Message Test", () => {
   let authenticatedUserToken = ""
   let tokens: string[] = [];
   let chatterWithId: ChatterType[] = []
-  let gqServer: ApolloServer<ChatterType>
 
   before(async () => {
-    let { app, apolloServer } = await createApp()
+    let app = await createApp()
     api = supertest(app)
-    gqServer = apolloServer
     await api.post("/api/test/resetDb");
     // registering all users
     let promiseArray = chatters.map(chatter => api.post("/api/chatter/register").send(chatter))
@@ -68,8 +66,6 @@ describe("Message Test", () => {
     )
   })
   after(async () => {
-    await gqServer.stop()
-    console.log("Apollo Server Closed")
     await mongoose.disconnect()
     console.log("Test Db Disconnected")
     console.log("Message tests finished")
@@ -84,25 +80,34 @@ describe("Message Test", () => {
     strictEqual(res.body.errors[0].extensions.code, "NOT_FRIENDS")
   })
   describe("talking with friends", () => {
-    it("send first message to get chat id that has the two participants", async () => {
+    it("send first message to get chat id that has the two participants the status of the chat will be sent when sending any message", async () => {
       const res = await api.post("/api/graphql")
         .send(firstMessageMutation("First Message", chatterWithId[1].id))
         .set({ authorization: authenticatedUserToken })
       strictEqual(res.body.errors, undefined)
-      ok(arraysAreEqual(res.body.data.firstMessage.chat.participants, [chatterWithId[0].id, chatterWithId[1].id]))
+      ok(arraysAreEqual(
+        // I did this way to cuz i became lazy participants should be full ChatterType
+        [
+          res.body.data.firstMessage.chat.participants[0].id,
+          res.body.data.firstMessage.chat.participants[1].id
+        ],
+        [
+          chatterWithId[0].id,
+          chatterWithId[1].id
+        ]))
       strictEqual(res.body.data.firstMessage.message, 'First Message')
+      strictEqual(res.body.data.firstMessage.chat.status, "sent")
     })
     describe("After first message", () => {
       let chatId = ""
+      let messageId = ""
       beforeEach(async () => {
         await api.post("/api/test/resetMessages");
         await api.post("/api/test/resetChat")
         const res = await api.post("/api/graphql")
           .send(firstMessageMutation("First Message", chatterWithId[1].id)).set({ authorization: authenticatedUserToken })
+        messageId = res.body.data.firstMessage.id
         chatId = res.body.data.firstMessage.chat.id
-      })
-      it("pass", async () => {
-        strictEqual(2, 2)
       })
       it("sending message with chatId should send it to right chatter", async () => {
         let res = await api.post("/api/graphql").send(messageMutation("message", chatId)).set({ authorization: authenticatedUserToken })
@@ -111,12 +116,20 @@ describe("Message Test", () => {
         strictEqual(message.message, "message");
         strictEqual(message.chatId, chatId)
       })
-      it.only("shouldn't be able to send first message if chatId already exists", async () => {
+      it("shouldn't be able to send first message if chatId already exists", async () => {
         let res = await api.post('/api/graphql')
           .send(firstMessageMutation('message', chatterWithId[1].id))
           .set({ authorization: authenticatedUserToken })
-        strictEqual(res.body.data.firstMessage, null)
         strictEqual(res.body.errors[0].extensions.code, "CHAT_ALREADY_EXISTS")
+      })
+      it("should be able to react to message", async () => {
+        let res = await api.post("/api/graphql").send(reactMessageMutation(messageId, chatId, "cry")).set({ authorization: authenticatedUserToken })
+        strictEqual(res.body.data.messageReaction.reactions[0].chatter, chatterWithId[0].id)
+        strictEqual(res.body.data.messageReaction.reactions[0].reaction, 'cry')
+      })
+      it("should be able to change status of chat", async () => {
+        let res = await api.post("/api/graphql").send(chatStatusUpdateMutation(chatId, "read")).set({ authorization: authenticatedUserToken })
+        strictEqual(res.body.data.chatStatusUpdate.status, 'read')
       })
     })
   })

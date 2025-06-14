@@ -1,6 +1,6 @@
-import { ApolloServer } from '@apollo/server';
+
 import { after, before, beforeEach, describe, it } from "node:test";
-import { ChatterType, NewChatterType } from "../chatterTypes";
+import type { ChatterType, NewChatterType } from "../chatterTypes";
 import supertest from "supertest";
 import assert from "node:assert";
 import mongoose from "mongoose";
@@ -10,10 +10,8 @@ import Test from "supertest/lib/test";
 
 describe("Chatter Test", () => {
 	let api: TestAgent<Test>;
-	let gqServer: ApolloServer<ChatterType>
 	before(async () => {
-		let { app, apolloServer } = await createApp();
-		gqServer = apolloServer
+		let app = await createApp();
 		api = supertest(app)
 
 	})
@@ -224,6 +222,10 @@ describe("Chatter Test", () => {
 			const res = await api.post("/api/chatter/login").send(chatters[0]);
 			token = `Bearer ${res.body.token}`;
 		});
+		it("/me endpoint should give full info of a user", async () => {
+			const res = await api.get("/api/chatter/me").set({ authorization: token })
+			console.log(res.body)
+		})
 		describe("Adding friend", () => {
 			it("should return status 401 without any auth", async () => {
 				await api
@@ -268,7 +270,7 @@ describe("Chatter Test", () => {
 		});
 		it("should return all matching display name users when searching", async () => {
 			const res = await api
-				.get("/api/chatter/search")
+				.post("/api/chatter/search")
 				.send({
 					displayName: "Similar",
 				})
@@ -290,7 +292,6 @@ describe("Chatter Test", () => {
 		});
 	});
 	after(async () => {
-		await gqServer.stop()
 		await mongoose.disconnect()
 		console.log("Test Db Disconnected");
 		console.log("Chatter Test Finished");

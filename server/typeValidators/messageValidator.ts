@@ -2,7 +2,7 @@ import { z } from "zod/v4";
 import { MongoIdSchema } from "./commonValidators";
 
 export const Reactions = z.enum(["like", "love", "sad", "laugh", "cry"]);
-export const Status = z.enum(['delivered', 'read'])
+export const MessageStatusSchema = z.enum(['delivered', 'read', 'sent'])
 
 export const MessageReaction = z.object({
   chatter: MongoIdSchema,
@@ -21,12 +21,24 @@ export const NewMessageSchema = FirstMessageSchema.omit({ receiver: true }).exte
 export const MessageReturnSchema = NewMessageSchema.extend({
   id: MongoIdSchema,
   sender: MongoIdSchema,
-  receiver: MongoIdSchema,
+  receiver: MongoIdSchema.optional(),
   sentTime: z.date(),
   reactions: z.array(MessageReaction)
 })
 
 export const MessageFilterSchema = z.object({
-  start: z.date(),
-  count: z.number()
+  earliest: z.string().optional(),
+  count: z.number(),
+  chatId: MongoIdSchema
 })
+
+
+export const MessageReactedSchema = z.object({
+  chatId: MongoIdSchema,
+  messageId: MongoIdSchema,
+  reaction: Reactions
+})
+
+// export const MessageReactedSchema = MessageReactedSchema.extend({
+// })
+

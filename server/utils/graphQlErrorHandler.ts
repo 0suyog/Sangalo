@@ -2,6 +2,7 @@ import { gqError, ServerError } from "./errors"
 import { MongoServerError } from "mongodb"
 import { logger } from "./helpers"
 import { ZodError } from "zod/v4"
+import { JsonWebTokenError } from "jsonwebtoken"
 
 export const gqErrorHandler = (error: unknown) => {
   // ! Remove this after DDebugging
@@ -30,6 +31,9 @@ export const gqErrorHandler = (error: unknown) => {
   }
   if (error instanceof ZodError) {
     return gqError("Input Validation Failed", error.name, error.issues)
+  }
+  if (error instanceof JsonWebTokenError) {
+    return gqError("Invalid token", "INVALID_TOKEN")
   }
   if (error instanceof Error) {
     console.log(error)

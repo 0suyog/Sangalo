@@ -1,6 +1,6 @@
 import { ApolloServer } from "@apollo/server"
 import { resolvers, typeDefs } from "./graphql/messageSchema"
-import { ChatterType } from "./chatterTypes";
+import type { ChatterType } from "./chatterTypes";
 
 export const apolloServer = async () => {
   const server = new ApolloServer<ChatterType>({

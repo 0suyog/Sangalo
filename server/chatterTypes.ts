@@ -4,12 +4,31 @@ import {
 	NewChatterSchema,
 	SearchSchema,
 } from "./typeValidators/chatterValidator";
-import { MongoID } from "./types";
+import type { MongoID } from "./types";
+import type { Types } from "mongoose";
 
 export type NewChatterType = z.infer<typeof NewChatterSchema>;
 export interface ChatterType extends Omit<NewChatterType, "password" | "email"> {
 	status: "online" | "offline" | "idle" | "dnd";
 	id: MongoID;
+}
+
+export interface ChatterDoc {
+	_id: Types.ObjectId,
+	email?: string,
+	status: "online" | "offline" | "idle" | "dnd";
+	friends: Types.ObjectId[]
+	password: string
+	username: string,
+	displayName: string
+}
+
+export interface populatedChatterDoc extends Omit<ChatterDoc, "friends"> {
+	friends: ChatterDoc[]
+}
+
+export interface PopulatedChatterType extends ChatterType {
+	friends: ChatterType[]
 }
 
 export type ChatterSearchResponse = {

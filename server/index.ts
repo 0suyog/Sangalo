@@ -4,7 +4,7 @@ import { logger } from "./utils/helpers";
 
 
 (async () => {
-	let { app } = await createApp()
+	let app = await createApp()
 	app.listen(PORT, () => {
 		logger.log(`Server has started; http://localhost:${PORT}`)
 	})

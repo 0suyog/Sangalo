@@ -1,8 +1,7 @@
 import { model, Schema } from "mongoose";
-import { ChatValidationSchema } from "../typeValidators/chatValidator";
-import { ChatType } from "../chatTypes";
+import type { ChatDoc } from "../chatTypes";
 
-const ChatSchema = new Schema(
+const ChatSchema = new Schema<ChatDoc>(
 	{
 		isGroup: {
 			type: Boolean,
@@ -15,25 +14,15 @@ const ChatSchema = new Schema(
 		name: {
 			type: String,
 		},
-		newMessage: {
-			type: Boolean,
-			required: true,
-			default: false,
+		latestMessage: {
+			type: Schema.ObjectId,
+			ref: "Message"
 		},
+		status: {
+			type: String,
+			enum: ['read', 'delivered', 'sent']
+		}
 	},
-	{
-		toJSON: {
-			transform: (doc, ret): ChatType => {
-				delete ret._id;
-				delete ret.__v;
-				ret.id = doc._id.toString();
-				ret.participants = doc.participants.map((participant): string => {
-					return participant.toString()
-				});
-				return ChatValidationSchema.parse(ret);
-			},
-		},
-	}
 );
 
 const Chat = model("Chat", ChatSchema);

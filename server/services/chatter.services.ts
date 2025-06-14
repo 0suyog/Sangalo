@@ -1,9 +1,12 @@
 import { compare } from "bcryptjs";
 import { Chatter } from "../models/chatter.model";
-import {
+import type {
+	
 	ChatterType,
 	LoginType,
 	NewChatterType,
+	populatedChatterDoc,
+	PopulatedChatterType,
 	SearchType,
 	TokenType,
 } from "../chatterTypes";
@@ -12,8 +15,9 @@ import { NODE_ENV, SECRETKEY } from "../utils/config";
 import { ServerError } from "../utils/errors";
 import { hash } from "bcryptjs";
 import { isMongoID } from "../typeGuards";
-import { MongoID } from "../types";
-import { Types } from "mongoose";
+import type { MongoID } from "../types";
+import { Types, type HydratedDocument } from "mongoose";
+import { returnableChatter, returnablePopulatedChatter } from "serviceHelper/chatter.helper";
 
 const addChatter = async (chatter: NewChatterType) => {
 	let hashedPassword = await hash(chatter.password, 7);
@@ -30,7 +34,7 @@ const checkUserAvailability = async (username: string): Promise<boolean> => {
 const getByUsername = async (username: string): Promise<ChatterType> => {
 	let chatter = await Chatter.findOne({ username: username });
 	if (chatter) {
-		return chatter.toJSON<ChatterType>();
+		return returnableChatter(chatter)
 	}
 	throw new ServerError(
 		"User with that username was not found",
@@ -48,7 +52,7 @@ const getById = async (id: string): Promise<ChatterType> => {
 	}
 	let chatter = await Chatter.findById(id);
 	if (chatter) {
-		return chatter.toJSON<ChatterType>();
+		return returnableChatter(chatter)
 	}
 	throw new ServerError(
 		"User with that id was not found",
@@ -59,6 +63,16 @@ const getById = async (id: string): Promise<ChatterType> => {
 		}
 	);
 };
+
+
+const me = async (id: MongoID): Promise<PopulatedChatterType> => {
+	let chatter = await Chatter.findById(id)
+	if (!chatter) {
+		throw new ServerError("Chatter not Found", 404, "CHATTER_NOT_FOUND")
+	}
+	let populatedChatter: HydratedDocument<populatedChatterDoc> = await chatter?.populate({ path: "friends", select: "-__v -friends" })
+	return returnablePopulatedChatter(populatedChatter);
+}
 
 const getFriends = async (id: string): Promise<ChatterType[]> => {
 	if (!isMongoID(id)) {
@@ -156,12 +170,7 @@ const searchChatter = async (
 	);
 
 	return results.map((friend) => {
-		return {
-			id: friend._id.toString() as MongoID,
-			username: friend.username,
-			status: friend.status,
-			displayName: friend.displayName,
-		};
+		return returnableChatter(friend);
 	});
 };
 
@@ -196,5 +205,6 @@ export const chatterServices = {
 	checkUserAvailability,
 	resetChatterDb,
 	deleteChatter,
-	isFriend: areFriends
+	areFriends,
+	me
 };

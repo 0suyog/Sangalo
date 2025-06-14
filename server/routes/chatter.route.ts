@@ -1,13 +1,13 @@
-import { NextFunction, Request, Response, Router } from "express";
+import { Router, type NextFunction, type Request, type Response } from "express";
 import {
 	LoginSchema,
 	NewChatterSchema,
 	SearchSchema,
 } from "../typeValidators/chatterValidator";
 import { chatterServices } from "../services/chatter.services";
-import { ChatterSearchResponse, ChatterType, TokenType } from "../chatterTypes";
+import type { ChatterSearchResponse, ChatterType, PopulatedChatterType, TokenType } from "../chatterTypes";
 import { chatterAuthentication } from "../utils/middleWares";
-import { MongoID } from "../types";
+import type { MongoID } from "../types";
 import { MongoIdSchema } from "../typeValidators/commonValidators";
 
 const ChatterRouter = Router();
@@ -89,7 +89,17 @@ ChatterRouter.post("/addFriend/:id", chatterAuthentication, async (_req, res, ne
 	}
 });
 
-ChatterRouter.get(
+ChatterRouter.get("/me", chatterAuthentication, async (_req: Request, res: Response<PopulatedChatterType>, next: NextFunction) => {
+	try {
+		const chatterId = _req.chatter?.id as MongoID
+		let chatterDetails = await chatterServices.me(chatterId)
+		res.json(chatterDetails);
+	} catch (e) {
+		next(e)
+	}
+})
+
+ChatterRouter.post(
 	"/search",
 	chatterAuthentication,
 	async (

@@ -1,9 +1,9 @@
-import { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod/v4";
 import { chatterServices } from "../services/chatter.services";
 import { verify } from "jsonwebtoken";
 import { SECRETKEY } from "./config";
-import { ChatterType, JwtPayload } from "../chatterTypes";
+import type { ChatterType, JwtPayload } from "../chatterTypes";
 import { ServerError } from "./errors";
 import { MongoServerError } from "mongodb";
 import { logger } from "./helpers";
@@ -106,9 +106,16 @@ export const extractChatter = async (_req: Request): Promise<ChatterType> => {
 	if (!auth?.startsWith("Bearer ")) {
 		throw new ServerError("Invalid Auth", 401, "NO_AUTH")
 	}
+	return await bearerTokenToChatter(auth)
+}
+
+export const bearerTokenToChatter = async (auth: string): Promise<ChatterType> => {
 	const token: string = auth.slice(7);
 	const decodedToken = verify(token, SECRETKEY) as JwtPayload;
 	const chatter = await chatterServices.getById(decodedToken.id)
+	if (!chatter) {
+		throw new ServerError("The chatter doesnt exist", 404, "INVALID_TOKEN")
+	}
 	return chatter;
 }
 

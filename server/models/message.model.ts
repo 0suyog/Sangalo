@@ -1,30 +1,30 @@
-import { Types, Schema, model, now } from "mongoose";
-import { MessageReturnSchema } from "../typeValidators/messageValidator";
-import { MessageReturnType } from "../messageTypes";
+import { model, Schema } from "mongoose";
+import type { MessageDoc } from "../messageTypes";
 
-const MessageSchema = new Schema({
+const MessageSchema = new Schema<MessageDoc>({
 	chatId: {
-		type: Types.ObjectId,
+		type: Schema.ObjectId,
 		ref: "Chat",
+		required: true
 	},
 	sender: {
 		ref: "Chatter",
-		type: Types.ObjectId,
+		type: Schema.ObjectId,
 		required: true,
 	},
 	receiver: {
 		ref: "Chatter",
-		type: Types.ObjectId,
+		type: Schema.ObjectId,
 	},
 	message: {
 		type: String,
-		require: true,
+		required: true,
 		trim: true,
 	},
 	sentTime: {
 		type: Date,
 		required: true,
-		default: now()
+		default: Date.now
 	},
 	status: {
 		type: String,
@@ -35,7 +35,7 @@ const MessageSchema = new Schema({
 		type: [
 			{
 				chatter: {
-					type: Types.ObjectId,
+					type: Schema.ObjectId,
 					ref: "Chatter",
 				},
 				reaction: {
@@ -45,19 +45,6 @@ const MessageSchema = new Schema({
 			},
 		],
 	},
-}, {
-	toJSON: {
-		transform: (_doc, ret): MessageReturnType => {
-			ret.id = _doc._id.toString();
-			// changing all ObjectId to string so i can parse it properly
-			Object.keys(ret).map((key) => {
-				if (ret[key] instanceof Types.ObjectId) {
-					ret[key] = ret[key].toString();
-				}
-			})
-			return MessageReturnSchema.parse(ret);
-		}
-	}
 }
 );
 
