@@ -11,7 +11,11 @@ const createChatRoom = async (chatterId: MongoID, chatDetails: NewChatType): Pro
     throw new ServerError("At least one participant isn't friend with the authenticated Chatter", 500, "NOT_FRIENDS")
   }
   chatDetails.participants.push(chatterId)
-  const savedDocument = await new Chat(chatDetails).save()
+  let chat = await new Chat(chatDetails);
+  if (chatDetails.name) {
+    chat.isGroup = true
+  }
+  const savedDocument = await chat.save()
   const newChat: HydratedDocument<PopulatedChatType> = await savedDocument.populate("participants", "username displayName status _id")
   return {
     participants: newChat.participants.map(participant => {
