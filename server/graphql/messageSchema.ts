@@ -175,9 +175,10 @@ export const resolvers = {
         throw gqErrorHandler(e)
       }
     },
-    async createGroup(_: any, args: { chatDetails: unknown }, context: ChatterType): Promise<ChatReturnType> {
+    async createGroup(_: any, args: { groupDetails: unknown }, context: ChatterType): Promise<ChatReturnType> {
       try {
-        const chatDetails = NewChatSchema.parse(args.chatDetails);
+        console.log(args.groupDetails)
+        const chatDetails = NewChatSchema.parse(args.groupDetails);
         let newChat = await chatServices.createChatRoom(context.id, chatDetails)
         pubsub.publish(events.GROUP_CREATED, { groupCreation: newChat })
         return newChat

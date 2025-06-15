@@ -18,7 +18,8 @@ const createChatRoom = async (chatterId: MongoID, chatDetails: NewChatType): Pro
       return returnableChatter(participant)
     }),
     id: newChat.id,
-    isGroup: newChat.isGroup
+    isGroup: newChat.isGroup,
+    name: newChat.name
   }
 }
 // There will be no receiver if the the chat is a group so we return null else we return receiver id

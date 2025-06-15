@@ -39,7 +39,6 @@ describe("Message Test", () => {
   let authenticatedUserToken = ""
   let tokens: string[] = [];
   let chatterWithId: ChatterType[] = []
-
   before(async () => {
     let app = await createApp()
     api = supertest(app)
