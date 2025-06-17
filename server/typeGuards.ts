@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { MongoID } from "./types";
+import type { MongoID } from "./types";
 
 export const isMongoID = (id: unknown): id is MongoID => {
   return typeof id === "string" && Types.ObjectId.isValid(id);

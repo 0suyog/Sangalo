@@ -4,7 +4,7 @@
 2.Create a .env file with `touch .env`\<br>
 3.inside the .env file put this\<br>
 
-``` 
+```
 PORT=3000
 MONGO_DEV_DB=<mongodb address used development>
 MONGO_TEST_DB=<mongodb address used for running tests>
@@ -202,6 +202,7 @@ The Date is scalar type and it takes any string that is parsable by Date class o
   type Subscription{
     message:Message!
     firstMessage:FirstMessageReturn!
+    // messageReaction will trigger to all the participants in a chat(even to the one that reacted)
     messageReaction:Message!
     chatStatusUpdate:Chat!
     newGroup:Chat!
