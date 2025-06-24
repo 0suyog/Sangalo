@@ -1,7 +1,8 @@
 import { compare } from "bcryptjs";
 import { Chatter } from "../models/chatter.model";
 import type {
-	
+
+	ChatterDoc,
 	ChatterType,
 	LoginType,
 	NewChatterType,
@@ -70,7 +71,8 @@ const me = async (id: MongoID): Promise<PopulatedChatterType> => {
 	if (!chatter) {
 		throw new ServerError("Chatter not Found", 404, "CHATTER_NOT_FOUND")
 	}
-	let populatedChatter: HydratedDocument<populatedChatterDoc> = await chatter?.populate({ path: "friends", select: "-__v -friends" })
+
+	let populatedChatter: HydratedDocument<populatedChatterDoc> = await chatter.populate({ path: "friends", select: "-__v -friends" })
 	return returnablePopulatedChatter(populatedChatter);
 }
 
@@ -78,21 +80,12 @@ const getFriends = async (id: string): Promise<ChatterType[]> => {
 	if (!isMongoID(id)) {
 		throw new ServerError("Invalid Id", 422, "INVALID_ID", { id })
 	}
-	let chatter = await Chatter.findById(id, { _id: 0, friends: 1 }).populate("friends", "-friends, -email, -password").lean<{ friends: (Omit<ChatterType, "id"> & { _id: Types.ObjectId })[] }>();
-	if (chatter) {
-		return chatter.friends.map(({ _id, ...friendData }) => {
-			return {
-				...friendData,
-				id: _id.toString() as MongoID
-			}
-		});
+	let chatter = await Chatter.findById(id, { _id: 0, friends: 1 })
+	if (!chatter) {
+		throw new ServerError("The chatter doesnt exist", 404, 'CHATTER_NOT_FOUND', { inputs: { id } })
 	}
-	throw new ServerError(
-		"User with that id was not found",
-		404,
-		"NOT_FOUND_ERROR",
-		{ inputs: { id } }
-	);
+	let populatedChatter: HydratedDocument<populatedChatterDoc> = await chatter.populate({ path: "friends", select: "-__v -friends" })
+	return populatedChatter.friends.map(freind => returnableChatter(freind));
 };
 
 const loginChatter = async (chatterData: LoginType): Promise<TokenType> => {
