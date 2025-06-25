@@ -34,7 +34,7 @@ PopulatedChatterType:{
   ...ChatterType,
   friends:Array<ChatterType>
 }
-ChatterSearchResponse:Array<ChatterType>,
+ChatterSearchResponse:{chatters:Array<ChatterType>},
 LoginType:{
   username:string,
   password:string
