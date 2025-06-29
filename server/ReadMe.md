@@ -89,7 +89,7 @@ for subscriptions i am using websockets with graphql-ws, you should include {aut
 You can see errors in server if you didnt provide proper auth dont mind the error the server will keep being up.
 
 Graphql EndPoint:`http://localhost:<your port>/api/graphql`
-Subscriptions EndPoint:`ws://localhost:<your port>/api/graphql`
+Subscriptions EndPoint:`ws://localhost:<your port>/api/subscriptions`
 The Date is scalar type and it takes any string that is parsable by Date class of js
 
 ```
@@ -189,6 +189,7 @@ The Date is scalar type and it takes any string that is parsable by Date class o
 
   type Query{
     getMessages(filter:MessageFilter!):[Message!]!
+    getChats:[Chat!]!
   }
 
   type Mutation{

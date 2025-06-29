@@ -115,6 +115,8 @@ export const typeDefs = `
 
   type Query{
     getMessages(filter:MessageFilter!):[Message!]!
+    getChats:[Chat!]!
+    
   }
 
   type Mutation{
@@ -142,6 +144,15 @@ export const resolvers = {
         const filter = MessageFilterSchema.parse(args.filter);
         let messages = await messageServices.getMessages(context.id, filter)
         return messages
+      } catch (e) {
+        throw gqErrorHandler(e)
+      }
+    },
+    getChats: async (_root: unknown, _args: unknown, context: ChatterType): Promise<ChatReturnType[]> => {
+      try {
+        const chats = await chatServices.getChats(context.id);
+        console.log(JSON.stringify(chats, undefined, 2))
+        return chats;
       } catch (e) {
         throw gqErrorHandler(e)
       }

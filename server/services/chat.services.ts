@@ -6,6 +6,8 @@ import { ServerError } from "../utils/errors";
 import { chatterServices } from "./chatter.services";
 import { returnableMessage } from "serviceHelper/message.helper";
 import { returnableChatter } from "serviceHelper/chatter.helper";
+import type { ChatterDoc } from "chatterTypes";
+import type { MessageDoc } from "messageTypes";
 const createChatRoom = async (chatterId: MongoID, chatDetails: NewChatType): Promise<ChatReturnType> => {
   if (!await chatterServices.areFriends(chatterId, chatDetails.participants)) {
     throw new ServerError("At least one participant isn't friend with the authenticated Chatter", 500, "NOT_FRIENDS")
@@ -26,6 +28,26 @@ const createChatRoom = async (chatterId: MongoID, chatDetails: NewChatType): Pro
     name: newChat.name
   }
 }
+
+const getChats = async (chatterId: MongoID): Promise<ChatReturnType[]> => {
+  const chats = await Chat.find({ participants: chatterId }).sort("latestMessage").populate<{ participants: ChatterDoc[] }>({
+    path: "participants",
+    select: "_id username displayName status"
+  }).populate<{ latestMessage: MessageDoc }>({
+    path: "latestMessage",
+  }).lean()
+
+  return chats.map(({ _id, participants, latestMessage, __v, ...chatter }) => {
+    return {
+      participants: participants.map(chatter => returnableChatter(chatter)),
+      id: _id.toString() as MongoID,
+      latestMessage: returnableMessage(latestMessage),
+      ...chatter
+    }
+  })
+
+}
+
 // There will be no receiver if the the chat is a group so we return null else we return receiver id
 const getReceiver = async (chatId: MongoID, sender: MongoID): Promise<MongoID | null> => {
   let chat = await Chat.findById(chatId).lean()
@@ -114,6 +136,7 @@ const resetChatDb = async () => {
 }
 const chatServices = {
   createChatRoom,
+  getChats,
   resetChatDb,
   getReceiver,
   chatExists,

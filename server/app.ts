@@ -27,7 +27,7 @@ const createApp = async () => {
 
 	const app = express();
 	const httpServer = createServer(app)
-	const wsServer = new WebSocketServer({ server: httpServer, path: "/api/graphql" })
+	const wsServer = new WebSocketServer({ server: httpServer, path: "/api/subscriptions" })
 	await connectDb();
 	app.use(express.json());
 	app.use(cors());
