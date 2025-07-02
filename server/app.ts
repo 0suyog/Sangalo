@@ -46,15 +46,19 @@ const createApp = async () => {
 			console.log(JSON.stringify(ctx.connectionParams, undefined, 2))
 			let connectionParams = ctx.connectionParams as { auth?: string } | undefined
 			if (!connectionParams) {
-				throw gqError("Connection params seem to be missing make sure you have put auth in connectionParams", "AUTH_MISSING")
-				// throw new ServerError("Connection params seem to be missing make sure you have put auth in connectionParams", 403, "AUTH_MISSING")
+				throw new ServerError("Connection params seem to be missing make sure you have put auth in connectionParams", 403, "AUTH_MISSING")
 			}
 			let auth = connectionParams.auth;
 			if (!auth) {
 				throw new ServerError("Auth seems to be missing", 403, "AUTH_MISSING")
 			}
-			let chatter = await bearerTokenToChatter(auth)
-			return { ...chatter }
+			try {
+
+				let chatter = await bearerTokenToChatter(auth)
+				return { ...chatter }
+			} catch (e) {
+				throw gqErrorHandler(e)
+			}
 		}
 	}, wsServer)
 	let apolloServer = new ApolloServer({

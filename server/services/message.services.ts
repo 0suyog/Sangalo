@@ -39,9 +39,7 @@ const getMessages = async (chatterId: MongoID, filter: MessageFilterType): Promi
   if (filter.earliest) {
     dbFilter.sentTime = { $lt: new Date(filter.earliest) }
   }
-  console.log(dbFilter)
   const messages = await Message.find({ chatId: filter.chatId, ...dbFilter }).sort("-sentTime").limit(filter.count)
-  console.log(messages)
   return messages.map(message => returnableMessage(message));
 }
 

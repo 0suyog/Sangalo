@@ -5,14 +5,6 @@ import { ZodError } from "zod/v4"
 import { JsonWebTokenError } from "jsonwebtoken"
 
 export const gqErrorHandler = (error: unknown) => {
-  // ! Remove this after DDebugging
-  console.log('######################');
-  console.log('|');
-  console.log(error);
-  console.log('|');
-  console.log('######################');
-  // ! Remove this after DDebugging
-
   if (error instanceof ServerError) {
     return gqError(error.message, error.name, error.options)
   }
@@ -33,10 +25,10 @@ export const gqErrorHandler = (error: unknown) => {
     return gqError("Input Validation Failed", error.name, error.issues)
   }
   if (error instanceof JsonWebTokenError) {
-    return gqError("Invalid token", "INVALID_TOKEN")
+    return gqError(error.message, error.name)
   }
   if (error instanceof Error) {
-    console.log(error)
+    logger.log(error)
     return gqError("You did something that the developer didnt anticipate for, You are to be blamed not me.")
   }
   return gqError("You arent supposed to see this")
