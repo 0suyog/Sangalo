@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod/v4";
 import { chatterServices } from "../services/chatter.services";
-import { verify } from "jsonwebtoken";
+import { JsonWebTokenError, verify } from "jsonwebtoken";
 import { SECRETKEY } from "./config";
 import type { ChatterType, JwtPayload } from "../chatterTypes";
 import { ServerError } from "./errors";
@@ -49,6 +49,15 @@ export const errorHandler = (
 				},
 			});
 			return
+		}
+		logger.log(error instanceof JsonWebTokenError)
+		if (error instanceof JsonWebTokenError) {
+			res.status(403).json({
+				error: {
+					description: error.message,
+					name: error.name
+				}
+			})
 		}
 		// ! Remove this after DDebugging
 		logger.log("######################");

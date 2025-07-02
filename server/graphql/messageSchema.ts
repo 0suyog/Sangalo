@@ -151,7 +151,6 @@ export const resolvers = {
     getChats: async (_root: unknown, _args: unknown, context: ChatterType): Promise<ChatReturnType[]> => {
       try {
         const chats = await chatServices.getChats(context.id);
-        console.log(JSON.stringify(chats, undefined, 2))
         return chats;
       } catch (e) {
         throw gqErrorHandler(e)
@@ -246,10 +245,8 @@ export const resolvers = {
     },
     firstMessage: {
       subscribe: withFilter((root, _args) => {
-        console.log(root)
         return pubsub.asyncIterableIterator([events.FIRST_MESSAGE])
       }, (root, _args, context?: ChatterType) => {
-        console.log(context)
         if (!context) {
           return false
         }
