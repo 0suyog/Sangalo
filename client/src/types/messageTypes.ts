@@ -2,7 +2,7 @@ import type { ReceivedChatType } from "./ApiChatTypes"
 
 export interface MessageFilterType {
   earliest?: Date
-  count: string,
+  count: number,
   chatId: string
 }
 
@@ -13,21 +13,40 @@ export interface MessageReaction {
   reactions: Reactions
 }
 
-export interface ReceivedMessageType {
+export interface NewMessageType {
+  chatId: string,
+  message: string
+}
+
+export interface ReceivedMessageType extends NewMessageType {
   id: string,
   sender: string,
   receiver?: string,
   sentTime: Date,
-  reaction: Array<Reactions>
-  message: string,
-  chatId: string
+  reactions: Array<Reactions>
 }
 
-export interface FirstMessage {
+export interface FirstMessageType {
   receiver: string,
   message: string
 }
 
-export interface FirstMessageReturnType extends Omit<ReceivedMessageType, "chatId"> {
+export interface GetAllMessagesQueryType {
+  getMessages: ReceivedMessageType[]
+}
+
+export interface MessageSubscriptionType {
+  message: ReceivedMessageType
+}
+
+export interface SendMessageMutationType {
+  message: ReceivedMessageType
+}
+
+export interface SendFirstMessageMutationType {
+  firstMessage: ReceivedFirstMessageType
+}
+
+export interface ReceivedFirstMessageType extends Omit<ReceivedMessageType, "chatId reactions"> {
   chat: ReceivedChatType
 }

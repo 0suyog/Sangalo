@@ -8,7 +8,7 @@ export interface ReceivedChatType {
   id: string,
   latestMessage: ReceivedMessageType,
   participants: ReceivedChatterType[]
-  name?: string,
+  name: string | null,
   isGroup: boolean
   status: ChatStatusType
 }

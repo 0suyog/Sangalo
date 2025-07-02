@@ -1,7 +1,8 @@
-import { gql } from "@apollo/client";
+import { gql, type TypedDocumentNode } from "@apollo/client";
+import type { FirstMessageType, MessageFilterType, ReceivedFirstMessageType, ReceivedMessageType } from "../types/messageTypes";
 
-export const FirstMessage = gql`
-  mutation($message:String!, $receiver:String!){
+export const FirstMessage: TypedDocumentNode<ReceivedFirstMessageType, FirstMessageType> = gql`
+  mutation FirstMessage($message:String!, $receiver:String!){
     firstMessage(message:{message:$message,receiver:$receiver}){
       chat{
         id
@@ -19,6 +20,19 @@ export const FirstMessage = gql`
         sentTime
           }
       }
+    }
+  }
+`
+
+export const SendMessage: TypedDocumentNode<ReceivedMessageType, MessageFilterType> = gql`
+  mutation SendMessage($message:String!,$chatId:String!){
+    message(message:{message:$message,chatId:$chatId}){
+      chatId
+      sender
+      receiver
+      message
+      sentTime
+      id
     }
   }
 `

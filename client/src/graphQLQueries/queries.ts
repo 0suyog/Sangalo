@@ -1,4 +1,6 @@
-import { gql } from "@apollo/client";
+import { gql, type TypedDocumentNode } from "@apollo/client";
+import type { GetAllMessagesQueryType, MessageFilterType } from "../types/messageTypes";
+import type { AllChatsQuery } from "../types/ApiChatTypes";
 
 const chatterInfo = gql`
   fragment ChatterInfo on Chatter{
@@ -9,9 +11,9 @@ const chatterInfo = gql`
   }
 `
 
-export const GetAllMessages = gql`
-  query($count:Int!,$chatId:String!){
-    getMessages(filter:{count:$count,chatId:$chatId}){
+export const GetAllMessages: TypedDocumentNode<GetAllMessagesQueryType, MessageFilterType> = gql`
+  query GetAllMessages($count:Int!,$chatId:String!,$earliest:Date){
+    getMessages(filter:{count:$count,chatId:$chatId,earliest:$earliest}){
       chatId
       message
       sender
@@ -26,8 +28,8 @@ export const GetAllMessages = gql`
   }
 `
 
-export const getAllChats = gql`
-  query{
+export const getAllChats: TypedDocumentNode<AllChatsQuery> = gql`
+  query GetAllChats{
     getChats{
       id
       name

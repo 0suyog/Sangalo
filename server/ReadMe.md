@@ -139,6 +139,7 @@ The Date is scalar type and it takes any string that is parsable by Date class o
     chatId:String!
     message:String!
   }
+
   input FirstMessage{
     message:String!
     receiver:String!

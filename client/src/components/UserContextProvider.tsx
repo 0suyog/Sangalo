@@ -4,7 +4,6 @@ import {
 	useReducer,
 	type Dispatch,
 	type FC,
-	type ReactNode,
 } from "react";
 import {
 	chatterDetailsReducer,
@@ -14,14 +13,12 @@ import type {
 	ChatterReducerAction,
 	ChatterReducerInitialType,
 } from "../types/ChatterReducerTypes";
-import { Outlet, Route } from "react-router";
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { Outlet, useNavigate } from "react-router";
+import {  useQuery } from "@tanstack/react-query";
 import chatterServices from "../services/chatter.services";
 import { useTokenContext } from "../hooks/contextHooks";
 
-interface UserContextProviderProps {
-	children: ReactNode;
-}
+
 
 export type UserContextType = [
 	ChatterReducerInitialType,
@@ -30,6 +27,7 @@ export type UserContextType = [
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserContextProvider: FC = () => {
+	const navigate = useNavigate();
 	const [token, dispatchToken] = useTokenContext();
 	const [userDetails, dispatchUserDetails] = useReducer(
 		chatterDetailsReducer,
@@ -39,8 +37,18 @@ export const UserContextProvider: FC = () => {
 		queryKey: ["me"],
 		queryFn: chatterServices.me,
 		enabled: !!token.token,
+		retry: 1,
 	});
 	useEffect(() => {
+		if (!token.token) {
+			console.log("There is no token");
+			navigate("/login");
+		}
+		if (me.isError) {
+			localStorage.removeItem("token");
+			dispatchToken({ type: "REMOVE" });
+			navigate("/login");
+		}
 		if (!me.isError && !me.isPending) {
 			dispatchUserDetails({ type: "ADD", payload: me.data });
 		}

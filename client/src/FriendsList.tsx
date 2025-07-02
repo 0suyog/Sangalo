@@ -9,7 +9,7 @@ export const FriendsList: FC = () => {
 	useEffect(() => {
 		dispatchToken({ type: "CHECK" });
 	}, []);
-	const { isError, isPending, data, error } = useQuery({
+	const { isError, isPending, data  } = useQuery({
 		queryKey: ["friendsList"],
 		queryFn: chatterServices.getFriends,
 		enabled: !!token.token,
@@ -24,12 +24,11 @@ export const FriendsList: FC = () => {
 			dispatchUserDetails({ type: "ADD", payload: me.data });
 		}
 	}, [me.data]);
-	const [userDetails, dispatchUserDetails] = useUserContext();
+	const [_userDetails, dispatchUserDetails] = useUserContext();
 	if (isPending) {
 		return <>Loading...</>;
 	}
 	if (isError) {
-		console.log(error);
 		return <>An Error Occured. See console for details</>;
 	}
 	return (

@@ -8,23 +8,18 @@ import Button from "@mui/material/Button";
 import { useMutation as useReactMutation } from "@tanstack/react-query";
 import chatterServices from "../../services/chatter.services";
 import { useUserContext } from "../../hooks/contextHooks";
-import { useMutation as useGraphqlMutation } from "@apollo/client";
-import { FirstMessage } from "../../graphQLQueries/mutations";
 
 interface propTypes {
 	chatter: ReceivedChatterType;
 }
 
 export const UserBar: FC<propTypes> = ({ chatter }) => {
-	const [userDetails, _dispatchUserDetails] = useUserContext();
-	const [sendFirstMessage, { data }] = useGraphqlMutation(FirstMessage);
+	const [userDetails] = useUserContext();
 	const addFriendMutation = useReactMutation({
 		mutationFn: chatterServices.addFriend,
 	});
 	const [isFriend, setIsFriend] = useState(true);
-	useEffect(() => {
-		console.log(isFriend);
-	});
+	useEffect(() => {});
 	useEffect(() => {
 		setIsFriend(true);
 		if (userDetails) {
@@ -64,19 +59,7 @@ export const UserBar: FC<propTypes> = ({ chatter }) => {
 					>
 						<Add fontSize="small" />
 					</Button>
-				) : (
-					<Button
-						variant="outlined"
-						onClick={() => {
-							sendFirstMessage({
-								variables: {
-									message: "This is First Message",
-									receiver: chatter.id,
-								},
-							});
-						}}
-					></Button>
-				)}
+				) : null}
 			</Stack>
 		</>
 	);

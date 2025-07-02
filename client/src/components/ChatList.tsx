@@ -1,40 +1,66 @@
 import { useQuery } from "@apollo/client";
 import { getAllChats } from "../graphQLQueries/queries";
-import { useEffect, useState } from "react";
+import {
+	useEffect,
+	useState,
+	type FC,
+} from "react";
 import Skeleton from "@mui/material/Skeleton";
 import type { ChatListType } from "../types/ChatListTypes";
-import { useUserContext } from "../hooks/contextHooks";
+import { useTokenContext, useUserContext } from "../hooks/contextHooks";
 import { addFriendsWhoHaventBeenTextedYetInChatList } from "../helpers/chatHelper";
-import type { AllChatsQuery, ReceivedChatType } from "../types/ApiChatTypes";
-import List from "@mui/material/List";
-import { UserBar } from "./userBars/UserBar";
-import { ChatBar } from "./ChatBar";
+import { useNavigate } from "react-router";
+import Stack from "@mui/material/Stack";
+import Card from "@mui/material/Card";
+import CardActionArea from "@mui/material/CardActionArea";
+import Typography from "@mui/material/Typography";
+import Search from "@mui/icons-material/Search";
+import { ChatBar } from "./chatBars/ChatBar";
 
-export const ChatList = () => {
-	const { loading, error, data } = useQuery<AllChatsQuery>(getAllChats);
-	const [chats, setChats] = useState<ChatListType[]>([]);
+export const ChatList: FC = () => {
+	const [token] = useTokenContext();
+	const { loading, error, data } = useQuery(getAllChats, {
+		skip: !token.token,
+	});
 	const [userDetails] = useUserContext();
+	const navigate = useNavigate();
+	const [chats, setChats] = useState<ChatListType[]>([]);
+
 	useEffect(() => {
 		if (!loading && !error && data) {
 			const chatWFriends = addFriendsWhoHaventBeenTextedYetInChatList(
 				userDetails?.friends || [],
 				data.getChats
 			);
-			console.log(chatWFriends);
 			setChats(chatWFriends);
 		}
-	}, [loading, error, data?.getChats, userDetails]);
+	}, [loading, error, data, userDetails]);
+
 	if (loading) {
 		return <Skeleton variant="rectangular" />;
 	}
+
+	const handleChatBarClick = (id: string) => {
+		navigate(`/messaging/${id}`);
+	};
+
 	return (
-		<>
-			<List>
+		<Stack gap={0.5}>
+			<Card sx={{ borderRadius: 8 }}>
+				<CardActionArea sx={{ cursor: "text" }}>
+					<Stack direction={"row"} alignItems={"center"} p={0.5} gap={0.5}>
+						<Search />
+						<Typography>search</Typography>
+					</Stack>
+				</CardActionArea>
+			</Card>
+			<Stack gap={0.2}>
 				{chats.map((chat) => {
-					console.log(chat);
-					return <ChatBar chat={chat} key={chat.id} />;
+					return (
+						<ChatBar chat={chat} key={chat.id} onClick={handleChatBarClick} />
+					);
 				})}
-			</List>
-		</>
+			</Stack>
+		</Stack>
 	);
 };

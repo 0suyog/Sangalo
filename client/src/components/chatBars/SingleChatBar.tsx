@@ -1,56 +1,88 @@
-import Skeleton from "@mui/material/Skeleton";
+import { useEffect, useState, type FC } from "react";
+import type { ChatBarType } from "../../types/ChatListTypes";
 import Stack from "@mui/material/Stack";
 import { AvatarWithStatus } from "../AvatarWithStatus";
+import Skeleton from "@mui/material/Skeleton";
+import type { ReceivedChatterType } from "../../types/ApiChatterTypes";
+import { useUserContext } from "../../hooks/contextHooks";
 import Typography from "@mui/material/Typography";
-import type { ChatListType } from "../../types/ChatListTypes";
+import Card from "@mui/material/Card";
+import CardActionArea from "@mui/material/CardActionArea";
+import { useParams } from "react-router";
+import CardContent from "@mui/material/CardContent";
+
 interface PropType {
-	chat: ChatListType;
+	chat: ChatBarType;
+	onClick: (id: string) => void;
 }
-const SingleChatBar = () => {
+export const SingleChatBar: FC<PropType> = ({ chat, onClick }) => {
 	const [receiver, setReceiver] = useState<ReceivedChatterType | null>(null);
 	const [userDetails] = useUserContext();
-	const [latestMessageBy, setLatestMessageBy] = useState("");
+	const { id } = useParams();
 	useEffect(() => {
-		if (chat.type === "chat") {
-			const receiver = chat.participants.find(
-				(chatter) => chatter.id != userDetails?.id
-			);
-			if (receiver) {
-				setReceiver(receiver);
-			}
+		const receiver = chat.participants.find(
+			(chatter) => chatter.id != userDetails?.id
+		);
+		if (receiver) {
+			setReceiver(receiver);
 		}
 	}, [setReceiver, chat, userDetails]);
-	return (
-		<>
-			<Stack direction="row" gap={1}>
-				{!receiver ? (
-					<>
-						<Skeleton variant="circular" />
-						<Skeleton variant="rectangular" />
-					</>
-				) : (
-					<>
-						<AvatarWithStatus
-							username={receiver.username}
-							image={chat.pictures[0]}
-							status={receiver.status}
-						/>
-						<Stack alignItems={"center"} justifyContent={"center"}>
-							<Typography
-								variant="subtitle2"
-								lineHeight={0.5}
-								align="left"
-								alignSelf={"start"}
+	if (chat.type === "chat") {
+		return (
+			<>
+				<Card variant="outlined">
+					<CardActionArea
+						onClick={() => onClick(chat.id)}
+						data-active={chat.id === id ? "" : undefined}
+						sx={{
+							"&[data-active]": {
+								backgroundColor: "action.selected",
+							},
+							"&:hover": {
+								backGroundColor: "action.hover",
+							},
+						}}
+					>
+						<CardContent>
+							<Stack
+								direction="row"
+								gap={1}
+								onClick={() => onClick(chat.id)}
+								sx={{ cursor: "pointer" }}
 							>
-								{receiver.displayName}
-							</Typography>
-							<Typography variant="caption">
-								{`${chat.latestMessage.message}`}
-							</Typography>
-						</Stack>
-					</>
-				)}
-			</Stack>
-		</>
-	);
+								{!receiver ? (
+									<>
+										<Skeleton variant="circular" />
+										<Skeleton variant="rectangular" />
+									</>
+								) : (
+									<>
+										<AvatarWithStatus
+											username={receiver.username}
+											image={chat.pictures[0]}
+											status={receiver.status}
+										/>
+										<Stack alignItems={"center"} justifyContent={"center"}>
+											<Typography
+												variant="subtitle2"
+												lineHeight={0.5}
+												align="left"
+												alignSelf={"start"}
+											>
+												{receiver.displayName}
+											</Typography>
+											<Typography variant="caption">
+												{`${chat.latestMessage.message}`}
+											</Typography>
+										</Stack>
+									</>
+								)}
+							</Stack>
+						</CardContent>
+					</CardActionArea>
+				</Card>
+			</>
+		);
+	}
+	return <></>;
 };

@@ -1,13 +1,13 @@
-import { type FC } from "react";
+import { useEffect, type FC } from "react";
 import { useMutation } from "@tanstack/react-query";
 import chatterServices from "./services/chatter.services";
 import { Form } from "./form";
-import { setToken } from "./apiData";
+import { setToken, TOKEN } from "./apiData";
 import { useTokenContext } from "./hooks/contextHooks";
 import { useNavigate } from "react-router";
 
 export const Login: FC = () => {
-	const [_token, dispatchToken] = useTokenContext();
+	const [token, dispatchToken] = useTokenContext();
 	const navigate = useNavigate();
 	const loginMutation = useMutation({
 		mutationKey: ["userToken"],
@@ -24,6 +24,15 @@ export const Login: FC = () => {
 			chatterServices.getFriends();
 		},
 	});
+
+	useEffect(() => {
+		console.log("login is being reached ");
+		console.log(TOKEN.length);
+		if (token.token) {
+			navigate("/messaging");
+		}
+	}, []);
+
 	const login = (username: string, password: string) => {
 		loginMutation.mutate({ username, password });
 	};

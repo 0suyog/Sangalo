@@ -5,6 +5,14 @@ export interface NonGroupChatListType extends Omit<ReceivedChatType, "name isGro
   isGroup: false
 }
 
+export interface ChatBarType extends ReceivedChatType {
+  type: 'chat',
+  pictures: string[]
+}
 
-export type ChatListType = ({ type: "chat", pictures: string[] } & ReceivedChatType)
-  | ({ type: "friend", chatStatus: ChatStatusType } & Omit<ReceivedChatterType, "email">)
+export interface FriendBarType extends Omit<ReceivedChatterType, "email"> {
+  type: "friend"
+  chatStatus: ChatStatusType
+}
+
+export type ChatListType = ChatBarType | FriendBarType
